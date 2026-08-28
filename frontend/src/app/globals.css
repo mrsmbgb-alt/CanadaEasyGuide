@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* Canada Easy Guide - Custom Styles */
+:root {
+  --primary: #c8102e;       /* Canadian red */
+  --primary-dark: #9e0c23;
+  --secondary: #1a1a2e;     /* Deep navy */
+  --accent: #f4b400;        /* Gold accent */
+  --bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6c757d;
+  --border: #e9ecef;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.15);
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* Ad slots */
+.ad-slot {
+  width: 100%;
+  min-height: 90px;
+  background: #f1f3f4;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.ad-slot-rectangle { min-height: 250px; }
+.ad-slot-leaderboard { min-height: 90px; }
+
+/* Prose styles for blog content */
+.prose-content h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 1rem; color: var(--secondary); }
+.prose-content h2 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: var(--secondary); border-bottom: 2px solid var(--primary); padding-bottom: 0.4rem; }
+.prose-content h3 { font-size: 1.2rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: var(--secondary); }
+.prose-content p { margin-bottom: 1rem; line-height: 1.8; }
+.prose-content ul, .prose-content ol { margin: 1rem 0 1rem 1.5rem; }
+.prose-content li { margin-bottom: 0.4rem; }
+.prose-content a { color: var(--primary); text-decoration: underline; }
+.prose-content strong { font-weight: 700; }
+.prose-content blockquote { border-left: 4px solid var(--primary); padding: 0.75rem 1.25rem; background: #fff5f5; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.prose-content img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+.prose-content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+.prose-content th { background: var(--secondary); color: white; padding: 0.75rem 1rem; text-align: left; }
+.prose-content td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); }
+.prose-content tr:nth-child(even) td { background: #f8f9fa; }
+.prose-content code { background: #f1f3f4; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+.prose-content pre { background: #1e1e2e; color: #cdd6f4; padding: 1.5rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+
+/* Card hover */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Admin sidebar */
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  color: #94a3b8;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.admin-sidebar-link:hover, .admin-sidebar-link.active {
+  background: rgba(200, 16, 46, 0.15);
+  color: #f87171;
+}
