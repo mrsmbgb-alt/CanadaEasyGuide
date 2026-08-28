@@ -1,38 +1,17 @@
-import { db } from "@/db";
-import { posts, adPlacements } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
 import PostCard from "@/components/PostCard";
 import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 import { CATEGORY_BG, CATEGORIES } from "@/lib/utils";
+import { getActiveAds, getFeaturedPosts, getLatestPosts, type AdPlacement } from "@/lib/posts";
 
-type AdRow = typeof adPlacements.$inferSelect;
-
-async function getHomeData() {
-  const [featuredPosts, latestPosts, ads] = await Promise.all([
-    db
-      .select()
-      .from(posts)
-      .where(and(eq(posts.published, true), eq(posts.featured, true)))
-      .orderBy(desc(posts.createdAt))
-      .limit(3),
-    db
-      .select()
-      .from(posts)
-      .where(eq(posts.published, true))
-      .orderBy(desc(posts.createdAt))
-      .limit(9),
-    db.select().from(adPlacements).where(eq(adPlacements.isActive, true)),
-  ]);
-  return { featuredPosts, latestPosts, ads };
-}
-
-function getAd(ads: AdRow[], name: string) {
+function getAd(ads: AdPlacement[], name: string) {
   return ads.find((a) => a.name.toLowerCase().includes(name.toLowerCase()));
 }
 
-export default async function HomePage() {
-  const { featuredPosts, latestPosts, ads } = await getHomeData();
+export default function HomePage() {
+  const featuredPosts = getFeaturedPosts(3);
+  const latestPosts = getLatestPosts(9);
+  const ads = getActiveAds();
   const headerAd = getAd(ads, "Header");
   const inPostAd = getAd(ads, "In-Post Top");
   const footerAd = getAd(ads, "Footer");
