@@ -1,55 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import PostCard from "@/components/PostCard";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-
-interface Post {
-  id: number;
-  title: string;
-  slug: string;
-  excerpt: string;
-  coverImage?: string | null;
-  category: string;
-  tags?: string | null;
-  views: number;
-  author: string;
-  createdAt: string;
-}
+import { searchPosts } from "@/lib/posts";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const q = searchParams.get("q") || "";
   const [query, setQuery] = useState(q);
-  const [results, setResults] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const doSearch = useCallback(async (term: string) => {
-    if (!term.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    try {
-      const res = await fetch(`/api/posts?search=${encodeURIComponent(term)}&limit=20`);
-      const data = await res.json();
-      setResults(data.posts || []);
-    } catch {
-      setResults([]);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (q) {
-      setQuery(q);
-      doSearch(q);
-    }
-  }, [q, doSearch]);
+  const results = useMemo(() => {
+    if (!searched || !q.trim()) return [];
+    return searchPosts(q);
+  }, [q, searched]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    setSearched(true);
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query)}`);
     }
@@ -79,13 +50,7 @@ function SearchContent() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
-        {loading && (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {!loading && searched && (
+        {searched && (
           <div>
             <p className="text-gray-600 mb-6 text-sm">
               Found <strong>{results.length}</strong> results for &ldquo;<strong>{q}</strong>&rdquo;

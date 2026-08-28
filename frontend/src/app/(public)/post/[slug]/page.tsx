@@ -1,18 +1,29 @@
-import { db } from "@/db";
-import { posts, adPlacements } from "@/db/schema";
-import { eq, and, desc, ne } from "drizzle-orm";
+import { marked } from "marked";
 import { notFound } from "next/navigation";
 import AdSlot from "@/components/AdSlot";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import { formatDate, CATEGORY_COLORS, CATEGORY_BG } from "@/lib/utils";
+import {
+  getActiveAds,
+  getPostBySlug,
+  getRelatedPosts,
+  getPostsByCategory,
+  getCoverImageFor,
+  getCategorySlug,
+  getPublishedPosts,
+} from "@/lib/posts";
 import type { Metadata } from "next";
 
 type Params = Promise<{ slug: string }>;
 
+export function generateStaticParams() {
+  return getPublishedPosts().map((post) => ({ slug: post.slug }));
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const [post] = await db.select().from(posts).where(eq(posts.slug, slug)).limit(1);
+  const post = getPostBySlug(slug);
   if (!post) return { title: "Not Found" };
   return {
     title: post.title,
@@ -23,45 +34,20 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function PostPage({ params }: { params: Params }) {
   const { slug } = await params;
-
-  const [post] = await db.select().from(posts).where(and(eq(posts.slug, slug), eq(posts.published, true))).limit(1);
+  const post = getPostBySlug(slug);
   if (!post) notFound();
 
-  // Increment views
-  await db.update(posts).set({ views: post.views + 1 }).where(eq(posts.id, post.id));
-
-  const [relatedPosts, ads] = await Promise.all([
-    db
-      .select()
-      .from(posts)
-      .where(and(eq(posts.published, true), eq(posts.category, post.category), ne(posts.id, post.id)))
-      .orderBy(desc(posts.createdAt))
-      .limit(3),
-    db.select().from(adPlacements).where(eq(adPlacements.isActive, true)),
-  ]);
-
+  const relatedPosts = getRelatedPosts(post.slug, 3);
+  const ads = getActiveAds();
   const inPostTopAd = ads.find((a) => a.name.toLowerCase().includes("in-post top") || a.name.toLowerCase().includes("in-post"));
   const inPostMidAd = ads.find((a) => a.name.toLowerCase().includes("middle"));
   const sidebarAd = ads.find((a) => a.name.toLowerCase().includes("sidebar"));
 
   const catClass = CATEGORY_COLORS[post.category] || "bg-gray-100 text-gray-700";
   const tags = post.tags ? post.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
-
-  const PLACEHOLDER_IMAGES: Record<string, string> = {
-    "Express Entry": "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200&q=80",
-    "Provincial Nominee": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=1200&q=80",
-    "Study in Canada": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80",
-    "Work Permits": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&q=80",
-    "Family Sponsorship": "https://images.unsplash.com/photo-1511895426328-dc8714191011?w=1200&q=80",
-    Citizenship: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=1200&q=80",
-    "Cost of Living": "https://images.unsplash.com/photo-1549421263-5ec394a5ad4c?w=1200&q=80",
-    "Settlement Tips": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=1200&q=80",
-  };
-
-  const coverImg =
-    post.coverImage && post.coverImage.startsWith("http")
-      ? post.coverImage
-      : PLACEHOLDER_IMAGES[post.category] || "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=1200&q=80";
+  const coverImg = getCoverImageFor(post.category, post.coverImage);
+  const categorySlug = getCategorySlug(post.category);
+  const bodyHtml = marked.parse(post.body, { async: false }) as string;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,7 +69,7 @@ export default async function PostPage({ params }: { params: Params }) {
               <nav className="text-sm text-gray-500 mb-4">
                 <Link href="/" className="hover:text-red-600">Home</Link>
                 <span className="mx-2">/</span>
-                <Link href={`/category/${post.category.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-red-600">{post.category}</Link>
+                <Link href={`/category/${categorySlug}`} className="hover:text-red-600">{post.category}</Link>
                 <span className="mx-2">/</span>
                 <span className="text-gray-700 truncate">{post.title}</span>
               </nav>
@@ -104,7 +90,6 @@ export default async function PostPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            {/* In-post top ad */}
             {inPostTopAd && (
               <div className="mb-6">
                 <AdSlot code={inPostTopAd.adsterraCode} name={inPostTopAd.name} type="leaderboard" />
@@ -114,10 +99,9 @@ export default async function PostPage({ params }: { params: Params }) {
             {/* Body */}
             <div
               className="prose-content bg-white rounded-xl p-6 sm:p-8 shadow-sm"
-              dangerouslySetInnerHTML={{ __html: post.body || "<p>No content yet.</p>" }}
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
 
-            {/* In-post middle ad */}
             {inPostMidAd && (
               <div className="my-6">
                 <AdSlot code={inPostMidAd.adsterraCode} name={inPostMidAd.name} type="rectangle" />
@@ -206,7 +190,7 @@ export default async function PostPage({ params }: { params: Params }) {
               <p className="text-sm font-medium opacity-80 mb-1">Browse More in</p>
               <h3 className="text-xl font-bold mb-3">{post.category}</h3>
               <Link
-                href={`/category/${post.category.toLowerCase().replace(/\s+/g, "-")}`}
+                href={`/category/${categorySlug}`}
                 className="inline-block bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition"
               >
                 View All Articles →
