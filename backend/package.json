@@ -1,0 +1,10 @@
+{
+  "name": "blog-backend",
+  "scripts": {
+    "start": "node ad-manager/ad-scheduler.js"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.2",
+    "koguma": "^0.0.1"
+  }
+}
